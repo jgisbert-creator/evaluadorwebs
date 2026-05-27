@@ -1,0 +1,104 @@
+app.post('/devolucion', async (req, res) => {
+
+  const {
+    dispositivo
+  } = req.body;
+
+  try {
+
+    await pool.query(
+      `
+      UPDATE prestamos
+      SET estado = 'devuelto'
+      WHERE dispositivo = $1
+      `,
+      [dispositivo]
+    );
+
+    await pool.query(
+      `
+      UPDATE chromebooks
+      SET disponible = true
+      WHERE nombre = $1
+      `,
+      [dispositivo]
+    );
+
+    res.json({
+      success: true,
+      mensaje: 'Devolución registrada'
+    });
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      mensaje: 'Error al registrar devolución'
+    });
+
+  }
+
+});
+
+/* =========================
+   HISTORIAL INCIDENCIAS
+========================= */
+
+app.get('/historial', async (req, res) => {
+
+  try {
+
+    const resultado = await pool.query(
+      `
+      SELECT *
+      FROM incidencias
+      ORDER BY fecha DESC
+      `
+    );
+
+    res.json(resultado.rows);
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).send('Error');
+
+  }
+
+});
+
+/* =========================
+   CHROMEBOOKS DISPONIBLES
+========================= */
+
+app.get('/disponibles', async (req, res) => {
+
+  try {
+
+    const resultado = await pool.query(
+      `
+      SELECT *
+      FROM chromebooks
+      WHERE disponible = true
+      ORDER BY nombre
+      `
+    );
+
+    res.json(resultado.rows);
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).send('Error');
+
+  }
+
+});
+
+app.listen(PORT, () => {
+  console.log(`Servidor iniciado en puerto ${PORT}`);
+});
