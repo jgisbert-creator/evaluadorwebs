@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Préstamos</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<h1>Gestión préstamos</h1>
+
+<form id="formPrestamo">
+
+<input type="text" id="ticket" placeholder="Ticket">
+
+<input type="text" id="alumno" placeholder="Alumno">
+
+<input type="text" id="curso" placeholder="Curso">
+
+<select id="dispositivo"></select>
+
+<select id="movimiento">
+
+<option>Entrega</option>
+<option>Devolución</option>
+
+</select>
+
+<button type="submit">
+Guardar movimiento
+</button>
+
+</form>
+
+<script>
+
+async function cargarDispositivos(){
+
+    const r =
+        await fetch('/dispositivos');
+
+    const data =
+        await r.json();
+
+    data.forEach(d=>{
+
+        const option =
+            document.createElement('option');
+
+        option.textContent =
+            `${d.nombre} (${d.estado})`;
+
+        option.value =
+            d.nombre;
+
+        dispositivo.appendChild(option);
+
+    });
+}
+
+cargarDispositivos();
+
+formPrestamo
+.addEventListener('submit', async(e)=>{
+
+    e.preventDefault();
+
+    await fetch('/prestamo', {
+
+        method:'POST',
+
+        headers:{
+            'Content-Type':'application/json'
+        },
+
+        body: JSON.stringify({
+
+            ticket: ticket.value,
+
+            alumno: alumno.value,
+
+            curso: curso.value,
+
+            dispositivo: dispositivo.value,
+
+            movimiento: movimiento.value,
+
+            fecha: new Date().toLocaleString()
+        })
+    });
+
+    alert('Movimiento guardado');
+
+});
+
+</script>
+
+</body>
+</html>

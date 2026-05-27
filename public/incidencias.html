@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Incidencias</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<h1>Nueva incidencia</h1>
+
+<form id="formIncidencia">
+
+<input type="text" id="ticket" placeholder="Ticket" required>
+
+<input type="text" id="serie" placeholder="Número serie" required>
+
+<input type="text" id="alumno" placeholder="Alumno" required>
+
+<input type="text" id="curso" placeholder="Curso" required>
+
+<input type="text" id="problema" placeholder="Problema" required>
+
+<select id="sustitucion">
+
+<option>Sí</option>
+<option>No</option>
+
+</select>
+
+<input type="text" id="motivo" placeholder="Motivo">
+
+<button type="submit">
+Guardar incidencia
+</button>
+
+</form>
+
+<script>
+
+document
+.getElementById('formIncidencia')
+.addEventListener('submit', async(e)=>{
+
+    e.preventDefault();
+
+    const datos = {
+
+        ticket: ticket.value,
+
+        serie: serie.value,
+
+        alumno: alumno.value,
+
+        curso: curso.value,
+
+        problema: problema.value,
+
+        sustitucion: sustitucion.value,
+
+        motivo: motivo.value
+    };
+
+    await fetch('/incidencia', {
+
+        method:'POST',
+
+        headers:{
+            'Content-Type':'application/json'
+        },
+
+        body: JSON.stringify(datos)
+    });
+
+    alert('Incidencia guardada');
+
+});
+
+</script>
+
+</body>
+</html>
