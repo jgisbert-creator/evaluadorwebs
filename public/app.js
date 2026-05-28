@@ -1,189 +1,191 @@
-```javascript
-async function cargarDispositivos(){
+document.addEventListener("DOMContentLoaded", () => {
 
-const contenedor=document.getElementById("dispositivos");
-
-if(!contenedor)return;
-
-const res=await fetch("/api/dispositivos");
-
-const datos=await res.json();
-
-contenedor.innerHTML="";
-
-datos.forEach(d=>{
-
-contenedor.innerHTML+=`
-
-<div class="item">
-
-<h3>${d.nombre}</h3>
-
-<div class="estado ${d.estado==="Disponible"?"disponible":"ocupado"}">
-
-${d.estado}
-
-</div>
-
-</div>
-
-`;
+    cargarDispositivos();
+    cargarIncidencias();
 
 });
 
+/* ========================= */
+/*     CARGAR DISPOSITIVOS   */
+/* ========================= */
+
+async function cargarDispositivos(){
+
+    const lista = document.getElementById("lista-dispositivos");
+
+    if(!lista) return;
+
+    lista.innerHTML = "";
+
+    const res = await fetch("/dispositivos");
+    const dispositivos = await res.json();
+
+    dispositivos.forEach(d => {
+
+        lista.innerHTML += `
+            <div class="card-dispositivo">
+                <h3>${d.nombre}</h3>
+                <p>${d.estado}</p>
+            </div>
+        `;
+
+    });
+
 }
+
+/* ========================= */
+/*     CARGAR INCIDENCIAS    */
+/* ========================= */
 
 async function cargarIncidencias(){
 
-const contenedor=document.getElementById("incidencias");
+    const lista = document.getElementById("lista-incidencias");
 
-if(!contenedor)return;
+    if(!lista) return;
 
-const res=await fetch("/api/incidencias");
+    lista.innerHTML = "";
 
-const datos=await res.json();
+    const res = await fetch("/ultimas-incidencias");
+    const incidencias = await res.json();
 
-contenedor.innerHTML="";
+    incidencias.forEach(i => {
 
-datos.forEach(i=>{
+        lista.innerHTML += `
+            <div class="card-incidencia">
+                <h3>${i.alumno}</h3>
+                <p>${i.problema}</p>
+                <small>${i.fecha}</small>
+            </div>
+        `;
 
-contenedor.innerHTML+=`
-
-<div class="item">
-
-<h3>${i.alumno}</h3>
-
-<p>${i.problema}</p>
-
-<div class="estado">
-
-${i.estado || "Abierta"}
-
-</div>
-
-</div>
-
-`;
-
-});
+    });
 
 }
 
-async function guardarIncidencia(){
+/* ========================= */
+/*    REGISTRAR INCIDENCIA   */
+/* ========================= */
 
-const datos={
+async function registrarIncidencia(){
 
-ticket:document.getElementById("ticket").value,
-serie:document.getElementById("serie").value,
-alumno:document.getElementById("alumno").value,
-curso:document.getElementById("curso").value,
-problema:document.getElementById("problema").value,
-sustitucion:document.getElementById("sustitucion").value,
-motivo:document.getElementById("motivo").value
+    const ticket = document.getElementById("ticket").value;
+    const serie = document.getElementById("serie").value;
+    const alumno = document.getElementById("alumno").value;
+    const curso = document.getElementById("curso").value;
+    const problema = document.getElementById("problema").value;
+    const sustitucion = document.getElementById("sustitucion").value;
+    const razon = document.getElementById("razon").value;
 
-};
+    const res = await fetch("/incidencia",{
 
-await fetch("/incidencia",{
+        method:"POST",
 
-method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
 
-headers:{
-"Content-Type":"application/json"
-},
+        body: JSON.stringify({
+            ticket,
+            serie,
+            alumno,
+            curso,
+            problema,
+            sustitucion,
+            razon
+        })
 
-body:JSON.stringify(datos)
+    });
 
-});
+    const data = await res.json();
 
-alert("Incidencia guardada");
+    alert(data.mensaje);
 
-location.reload();
+    location.href = "/chromebooks.html";
+
+}
+
+/* ========================= */
+/*      REGISTRAR PRESTAMO   */
+/* ========================= */
+
+async function registrarPrestamo(){
+
+    const ticket = document.getElementById("ticket").value;
+    const alumno = document.getElementById("alumno").value;
+    const curso = document.getElementById("curso").value;
+    const dispositivo = document.getElementById("dispositivo").value;
+    const tipo = document.getElementById("tipo").value;
+    const fecha = document.getElementById("fecha").value;
+
+    const res = await fetch("/prestamo",{
+
+        method:"POST",
+
+        headers:{
+            "Content-Type":"application/json"
+        },
+
+        body: JSON.stringify({
+            ticket,
+            alumno,
+            curso,
+            dispositivo,
+            tipo,
+            fecha
+        })
+
+    });
+
+    const data = await res.json();
+
+    alert(data.mensaje);
+
+    location.href = "/chromebooks.html";
 
 }
 
-async function guardarPrestamo(){
-
-const datos={
-
-ticket:document.getElementById("ticket").value,
-alumno:document.getElementById("alumno").value,
-curso:document.getElementById("curso").value,
-dispositivo:document.getElementById("dispositivo").value,
-movimiento:document.getElementById("movimiento").value,
-fecha:document.getElementById("fecha").value
-
-};
-
-await fetch("/prestamo",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify(datos)
-
-});
-
-alert("Movimiento guardado");
-
-location.reload();
-
-}
+/* ========================= */
+/*          BUSCADOR         */
+/* ========================= */
 
 async function buscar(){
 
-const texto=document.getElementById("buscar").value;
+    const q = document.getElementById("busqueda").value;
 
-const res=await fetch(`/buscar/${texto}`);
+    const res = await fetch(`/buscar?q=${q}`);
 
-const datos=await res.json();
+    const data = await res.json();
 
-const cont=document.getElementById("resultados");
+    const resultados = document.getElementById("resultados");
 
-cont.innerHTML="";
+    resultados.innerHTML = "";
 
-datos.incidencias.forEach(i=>{
+    resultados.innerHTML += `<h2>Incidencias</h2>`;
 
-cont.innerHTML+=`
+    data.incidencias.forEach(i=>{
 
-<div class="item">
+        resultados.innerHTML += `
+            <div class="resultado">
+                <strong>${i.alumno}</strong><br>
+                ${i.problema}<br>
+                ${i.ticket}
+            </div>
+        `;
 
-<h3>Incidencia</h3>
+    });
 
-<p>${i.alumno}</p>
-<p>${i.problema}</p>
+    resultados.innerHTML += `<h2>Préstamos</h2>`;
 
-</div>
+    data.prestamos.forEach(p=>{
 
-`;
+        resultados.innerHTML += `
+            <div class="resultado">
+                <strong>${p.alumno}</strong><br>
+                ${p.dispositivo}<br>
+                ${p.tipo}
+            </div>
+        `;
 
-});
-
-datos.prestamos.forEach(p=>{
-
-cont.innerHTML+=`
-
-<div class="item">
-
-<h3>Préstamo</h3>
-
-<p>${p.alumno}</p>
-<p>${p.dispositivo}</p>
-
-</div>
-
-`;
-
-});
+    });
 
 }
-
-window.onload=()=>{
-
-cargarDispositivos();
-cargarIncidencias();
-
-};
-```
