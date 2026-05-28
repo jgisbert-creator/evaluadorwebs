@@ -1,5 +1,6 @@
-k<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
+
 <head>
 <meta charset="UTF-8">
 <title>Buscador</title>
@@ -8,74 +9,120 @@ k<!DOCTYPE html>
 
 body{
     font-family:Arial;
-    background:#f5f6fa;
+    background:#f3f5f9;
+    margin:0;
+    padding:0;
+}
+
+header{
+    background:#0057ff;
+    color:white;
     padding:20px;
+    text-align:center;
+    font-size:32px;
+    font-weight:bold;
+}
+
+.contenedor{
+    padding:20px;
+}
+
+.caja{
+    background:white;
+    padding:20px;
+    border-radius:20px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.1);
 }
 
 input{
     width:100%;
     padding:15px;
-    margin-bottom:20px;
+    font-size:18px;
+    border:1px solid #ccc;
+    border-radius:10px;
+    box-sizing:border-box;
 }
 
 .item{
     background:white;
+    margin-top:15px;
     padding:15px;
-    margin-bottom:10px;
-    border-radius:10px;
+    border-radius:15px;
+    box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+
+.estado{
+    color:red;
+    font-weight:bold;
 }
 
 </style>
-
 </head>
 
 <body>
 
-<h1>Historial incidencias</h1>
+<header>
+Buscador
+</header>
 
-<input type="text" id="busqueda" placeholder="Buscar">
+<div class="contenedor">
+
+<div class="caja">
+
+<h2>Buscar historial</h2>
+
+<input
+type="text"
+id="busqueda"
+placeholder="Alumno, dispositivo o incidencia">
+
+</div>
 
 <div id="resultado"></div>
 
+</div>
+
 <script>
 
-let incidencias=[];
+let incidencias = [];
 
 fetch("/incidencias")
-.then(r=>r.json())
-.then(data=>{
+.then(res => res.json())
+.then(data => {
 
-    incidencias=data;
+    incidencias = data;
     mostrar(data);
 
 });
 
 function mostrar(lista){
 
-    let html="";
+    let html = "";
 
-    lista.forEach(i=>{
+    lista.forEach(i => {
 
         html += `
         <div class="item">
-            <b>${i.alumno}</b><br>
-            ${i.dispositivo}<br>
-            ${i.descripcion}
+            <h3>${i.alumno}</h3>
+            <p><b>Dispositivo:</b> ${i.dispositivo}</p>
+            <p><b>Incidencia:</b> ${i.descripcion}</p>
+            <p class="estado">${i.estado}</p>
         </div>
         `;
 
     });
 
-    document.getElementById("resultado").innerHTML=html;
+    document.getElementById("resultado").innerHTML = html;
 
 }
 
-document.getElementById("busqueda")
+document
+.getElementById("busqueda")
 .addEventListener("input",(e)=>{
 
     const texto = e.target.value.toLowerCase();
 
-    const filtrado = incidencias.filter(i=>
+    const filtradas = incidencias.filter(i =>
 
         i.alumno.toLowerCase().includes(texto) ||
         i.dispositivo.toLowerCase().includes(texto) ||
@@ -83,7 +130,7 @@ document.getElementById("busqueda")
 
     );
 
-    mostrar(filtrado);
+    mostrar(filtradas);
 
 });
 
