@@ -1,9 +1,10 @@
+```html
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
 
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Buscador</title>
 
@@ -13,46 +14,31 @@
 
 <body>
 
-<h1>Buscador</h1>
+<header>
+<div>Buscador</div>
+</header>
 
-<input type="text" id="buscar">
+<div class="container">
 
-<button onclick="buscarTodo()">
+<div class="card">
+
+<h2>Buscar historial</h2>
+
+<input id="buscar"
+placeholder="Alumno, ticket o serie">
+
+<button onclick="buscar()">
 Buscar
 </button>
 
-<div id="resultado"></div>
+</div>
 
-<script>
+<div id="resultados" class="lista"></div>
 
-async function buscarTodo(){
+</div>
 
-    const texto =
-        buscar.value;
-
-    const r =
-        await fetch(`/buscar/${texto}`);
-
-    const data =
-        await r.json();
-
-    resultado.innerHTML = `
-
-    <h2>Incidencias</h2>
-
-    <pre>
-${JSON.stringify(data.incidencias,null,2)}
-    </pre>
-
-    <h2>Préstamos</h2>
-
-    <pre>
-${JSON.stringify(data.prestamos,null,2)}
-    </pre>
-    `;
-}
-
-</script>
+<script src="app.js"></script>
 
 </body>
 </html>
+```

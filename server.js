@@ -234,3 +234,42 @@ app.listen(PORT, () => {
     console.log(`Servidor iniciado en puerto ${PORT}`);
 
 });
+```javascript
+app.get("/api/dispositivos",(req,res)=>{
+
+const dispositivos=[];
+
+for(let i=1;i<=10;i++){
+
+dispositivos.push({
+nombre:`Botiquín ${i}`,
+estado:"Disponible"
+});
+
+}
+
+for(let i=1;i<=11;i++){
+
+dispositivos.push({
+nombre:`Semic ${i}`,
+estado:"Disponible"
+});
+
+}
+
+res.json(dispositivos);
+
+});
+
+app.get("/api/incidencias",async(req,res)=>{
+
+const datos=await pool.query(
+
+"SELECT * FROM incidencias ORDER BY id DESC LIMIT 10"
+
+);
+
+res.json(datos.rows);
+
+});
+```

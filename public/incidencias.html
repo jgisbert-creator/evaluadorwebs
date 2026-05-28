@@ -1,88 +1,62 @@
+```html
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
 
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Incidencias</title>
 
 <link rel="stylesheet" href="style.css">
 
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
 </head>
 
 <body>
 
-<h1>Nueva incidencia</h1>
+<header>
+<div>Incidencias</div>
+</header>
 
-<form id="formIncidencia">
+<div class="container">
 
-<input type="text" id="ticket" placeholder="Ticket" required>
+<div class="card">
 
-<input type="text" id="serie" placeholder="Número serie" required>
+<h2>Nueva incidencia</h2>
 
-<input type="text" id="alumno" placeholder="Alumno" required>
+<input id="ticket" placeholder="Ticket">
+<input id="serie" placeholder="Número de serie">
+<input id="alumno" placeholder="Alumno">
+<input id="curso" placeholder="Curso">
 
-<input type="text" id="curso" placeholder="Curso" required>
-
-<input type="text" id="problema" placeholder="Problema" required>
+<textarea id="problema"
+placeholder="Problema"></textarea>
 
 <select id="sustitucion">
 
-<option>Sí</option>
+<option>Si</option>
 <option>No</option>
 
 </select>
 
-<input type="text" id="motivo" placeholder="Motivo">
+<input id="motivo"
+placeholder="Motivo si no hay sustitución">
 
-<button type="submit">
+<button onclick="guardarIncidencia()">
+
 Guardar incidencia
+
 </button>
 
-</form>
+</div>
 
-<script>
+</div>
 
-document
-.getElementById('formIncidencia')
-.addEventListener('submit', async(e)=>{
-
-    e.preventDefault();
-
-    const datos = {
-
-        ticket: ticket.value,
-
-        serie: serie.value,
-
-        alumno: alumno.value,
-
-        curso: curso.value,
-
-        problema: problema.value,
-
-        sustitucion: sustitucion.value,
-
-        motivo: motivo.value
-    };
-
-    await fetch('/incidencia', {
-
-        method:'POST',
-
-        headers:{
-            'Content-Type':'application/json'
-        },
-
-        body: JSON.stringify(datos)
-    });
-
-    alert('Incidencia guardada');
-
-});
-
-</script>
+<script src="app.js"></script>
 
 </body>
 </html>
+```
