@@ -1,275 +1,200 @@
 const express = require("express");
 const path = require("path");
-const { Pool } = require("pg");
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+/* SERVIR ARCHIVOS PUBLIC */
 app.use(express.static(path.join(__dirname, "public")));
 
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false
-    }
-});
+/* BASE DE DATOS TEMPORAL EN MEMORIA */
 
-/* CREAR TABLAS */
+let incidencias = [];
+let prestamos = [];
+let colaEspera = [];
 
-async function crearTablas() {
+/* DISPOSITIVOS DISPONIBLES */
 
-    await pool.query(`
+const dispositivos = [];
 
-    CREATE TABLE IF NOT EXISTS incidencias (
+/* BOTIQUINES */
 
-        id SERIAL PRIMARY KEY,
+for(let i=1;i<=10;i++){
 
-        ticket TEXT UNIQUE,
+    dispositivos.push({
+        nombre:`Botiquín ${i}`,
+        estado:"Disponible"
+    });
 
-        serie TEXT,
-
-        alumno TEXT,
-
-        curso TEXT,
-
-        problema TEXT,
-
-        sustitucion TEXT,
-
-        motivo TEXT,
-
-        fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
-    )
-
-    `);
-
-    await pool.query(`
-
-    CREATE TABLE IF NOT EXISTS prestamos (
-
-        id SERIAL PRIMARY KEY,
-
-        ticket TEXT,
-
-        alumno TEXT,
-
-        curso TEXT,
-
-        dispositivo TEXT,
-
-        movimiento TEXT,
-
-        fecha TEXT
-
-    )
-
-    `);
-
-    console.log("Tablas creadas");
 }
 
-crearTablas();
+/* SEMIC */
 
-/* PAGINA PRINCIPAL */
+for(let i=1;i<=11;i++){
 
-app.get("/", (req, res) => {
-
-    res.redirect("/chromebooks.html");
-
-});
-
-/* GUARDAR INCIDENCIA */
-
-app.post("/incidencia", async(req, res) => {
-
-    const {
-        ticket,
-        serie,
-        alumno,
-        curso,
-        problema,
-        sustitucion,
-        motivo
-    } = req.body;
-
-    await pool.query(
-
-        `INSERT INTO incidencias
-        (ticket, serie, alumno, curso, problema, sustitucion, motivo)
-
-        VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-
-        [
-            ticket,
-            serie,
-            alumno,
-            curso,
-            problema,
-            sustitucion,
-            motivo
-        ]
-    );
-
-    res.json({
-        ok:true
+    dispositivos.push({
+        nombre:`Semic ${i}`,
+        estado:"Disponible"
     });
 
-});
+}
 
-/* GUARDAR PRESTAMO */
+/* ========================= */
+/*        INCIDENCIAS        */
+/* ========================= */
 
-app.post("/prestamo", async(req, res) => {
+app.post("/incidencia",(req,res)=>{
 
-    const {
-        ticket,
-        alumno,
-        curso,
-        dispositivo,
-        movimiento,
-        fecha
-    } = req.body;
+    const nueva = {
+        id: incidencias.length + 1,
+        ticket: req.body.ticket,
+        serie: req.body.serie,
+        alumno: req.body.alumno,
+        curso: req.body.curso,
+        problema: req.body.problema,
+        sustitucion: req.body.sustitucion,
+        razon: req.body.razon || "",
+        fecha: new Date().toLocaleString()
+    };
 
-    await pool.query(
+    incidencias.push(nueva);
 
-        `INSERT INTO prestamos
-        (ticket, alumno, curso, dispositivo, movimiento, fecha)
+    /* COLA DE ESPERA */
 
-        VALUES ($1,$2,$3,$4,$5,$6)`,
+    if(
+        nueva.sustitucion === "No" &&
+        nueva.razon.toLowerCase().includes("no habia")
+    ){
 
-        [
-            ticket,
-            alumno,
-            curso,
-            dispositivo,
-            movimiento,
-            fecha
-        ]
-    );
-
-    res.json({
-        ok:true
-    });
-
-});
-
-/* BUSCADOR */
-
-app.get("/buscar/:texto", async(req, res) => {
-
-    const texto = `%${req.params.texto}%`;
-
-    const incidencias =
-        await pool.query(
-
-            `SELECT * FROM incidencias
-
-            WHERE
-
-            alumno ILIKE $1
-            OR ticket ILIKE $1
-            OR serie ILIKE $1`,
-
-            [texto]
-        );
-
-    const prestamos =
-        await pool.query(
-
-            `SELECT * FROM prestamos
-
-            WHERE
-
-            alumno ILIKE $1
-            OR ticket ILIKE $1
-            OR dispositivo ILIKE $1`,
-
-            [texto]
-        );
-
-    res.json({
-
-        incidencias: incidencias.rows,
-
-        prestamos: prestamos.rows
-
-    });
-
-});
-
-/* LISTA DISPOSITIVOS */
-
-app.get("/dispositivos", (req,res)=>{
-
-    const dispositivos = [];
-
-    for(let i=1;i<=10;i++){
-
-        dispositivos.push({
-            nombre:`Botiquín ${i}`,
-            estado:"Disponible"
+        colaEspera.push({
+            alumno:nueva.alumno,
+            curso:nueva.curso,
+            ticket:nueva.ticket
         });
 
     }
 
-    for(let i=1;i<=11;i++){
+    res.json({
+        ok:true,
+        mensaje:"Incidencia registrada"
+    });
 
-        dispositivos.push({
-            nombre:`Semic ${i}`,
-            estado:"Disponible"
-        });
+});
+
+/* ========================= */
+/*         PRESTAMOS         */
+/* ========================= */
+
+app.post("/prestamo",(req,res)=>{
+
+    const movimiento = {
+        id: prestamos.length + 1,
+        ticket:req.body.ticket,
+        alumno:req.body.alumno,
+        curso:req.body.curso,
+        dispositivo:req.body.dispositivo,
+        tipo:req.body.tipo,
+        fecha:req.body.fecha
+    };
+
+    prestamos.push(movimiento);
+
+    /* CAMBIO DE ESTADO */
+
+    const disp = dispositivos.find(
+        d => d.nombre === req.body.dispositivo
+    );
+
+    if(disp){
+
+        if(req.body.tipo === "Entrega"){
+            disp.estado = "Prestado";
+        }
+
+        if(req.body.tipo === "Devolución"){
+            disp.estado = "Disponible";
+        }
 
     }
+
+    res.json({
+        ok:true,
+        mensaje:"Movimiento registrado"
+    });
+
+});
+
+/* ========================= */
+/*          BUSCAR           */
+/* ========================= */
+
+app.get("/buscar",(req,res)=>{
+
+    const q = (req.query.q || "").toLowerCase();
+
+    const incidenciasEncontradas = incidencias.filter(i =>
+        i.ticket.toLowerCase().includes(q) ||
+        i.serie.toLowerCase().includes(q) ||
+        i.alumno.toLowerCase().includes(q)
+    );
+
+    const prestamosEncontrados = prestamos.filter(p =>
+        p.ticket.toLowerCase().includes(q) ||
+        p.alumno.toLowerCase().includes(q) ||
+        p.dispositivo.toLowerCase().includes(q)
+    );
+
+    res.json({
+        incidencias: incidenciasEncontradas,
+        prestamos: prestamosEncontrados,
+        cola: colaEspera
+    });
+
+});
+
+/* ========================= */
+/*      DISPOSITIVOS         */
+/* ========================= */
+
+app.get("/dispositivos",(req,res)=>{
 
     res.json(dispositivos);
 
 });
 
-/* SERVIDOR */
+/* ========================= */
+/*      ULTIMAS INCIDENCIAS  */
+/* ========================= */
 
-const PORT = process.env.PORT || 3000;
+app.get("/ultimas-incidencias",(req,res)=>{
 
-app.listen(PORT, () => {
+    const ultimas = incidencias.slice(-5).reverse();
 
-    console.log(`Servidor iniciado en puerto ${PORT}`);
-
-});
-```javascript
-app.get("/api/dispositivos",(req,res)=>{
-
-const dispositivos=[];
-
-for(let i=1;i<=10;i++){
-
-dispositivos.push({
-nombre:`Botiquín ${i}`,
-estado:"Disponible"
-});
-
-}
-
-for(let i=1;i<=11;i++){
-
-dispositivos.push({
-nombre:`Semic ${i}`,
-estado:"Disponible"
-});
-
-}
-
-res.json(dispositivos);
+    res.json(ultimas);
 
 });
 
-app.get("/api/incidencias",async(req,res)=>{
+/* ========================= */
+/*         HOME              */
+/* ========================= */
 
-const datos=await pool.query(
+app.get("/",(req,res)=>{
 
-"SELECT * FROM incidencias ORDER BY id DESC LIMIT 10"
-
-);
-
-res.json(datos.rows);
+    res.sendFile(
+        path.join(__dirname,"public","chromebooks.html")
+    );
 
 });
-```
+
+/* ========================= */
+/*        INICIAR            */
+/* ========================= */
+
+app.listen(PORT,()=>{
+
+    console.log(`Servidor funcionando en puerto ${PORT}`);
+
+});
