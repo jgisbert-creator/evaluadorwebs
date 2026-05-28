@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Buscador</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<h1>Buscador</h1>
+
+<input type="text" id="buscar">
+
+<button onclick="buscarTodo()">
+Buscar
+</button>
+
+<div id="resultado"></div>
+
+<script>
+
+async function buscarTodo(){
+
+    const texto =
+        buscar.value;
+
+    const r =
+        await fetch(`/buscar/${texto}`);
+
+    const data =
+        await r.json();
+
+    resultado.innerHTML = `
+
+    <h2>Incidencias</h2>
+
+    <pre>
+${JSON.stringify(data.incidencias,null,2)}
+    </pre>
+
+    <h2>Préstamos</h2>
+
+    <pre>
+${JSON.stringify(data.prestamos,null,2)}
+    </pre>
+    `;
+}
+
+</script>
+
+</body>
+</html>
