@@ -1,200 +1,169 @@
 const express = require("express");
+const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.static("public"));
 
-/* SERVIR ARCHIVOS PUBLIC */
-app.use(express.static(path.join(__dirname, "public")));
+/* BASE DE DATOS */
 
-/* BASE DE DATOS TEMPORAL EN MEMORIA */
+const db = new sqlite3.Database("./chromebooks.db");
 
-let incidencias = [];
-let prestamos = [];
-let colaEspera = [];
+/* TABLA INCIDENCIAS */
 
-/* DISPOSITIVOS DISPONIBLES */
+db.run(`
+CREATE TABLE IF NOT EXISTS incidencias (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    alumno TEXT,
+    dispositivo TEXT,
+    descripcion TEXT,
+    estado TEXT,
+    fecha TEXT
+)
+`);
 
-const dispositivos = [];
+/* TABLA PRESTAMOS */
 
-/* BOTIQUINES */
+db.run(`
+CREATE TABLE IF NOT EXISTS prestamos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    alumno TEXT,
+    dispositivo TEXT,
+    fecha TEXT,
+    devuelto INTEGER DEFAULT 0
+)
+`);
 
-for(let i=1;i<=10;i++){
+/* INICIO */
 
-    dispositivos.push({
-        nombre:`Botiquín ${i}`,
-        estado:"Disponible"
-    });
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "public/index.html"));
+});
 
-}
+/* LISTA DISPOSITIVOS */
 
-/* SEMIC */
+app.get("/dispositivos", (req, res) => {
 
-for(let i=1;i<=11;i++){
+    const dispositivos = [];
 
-    dispositivos.push({
-        nombre:`Semic ${i}`,
-        estado:"Disponible"
-    });
-
-}
-
-/* ========================= */
-/*        INCIDENCIAS        */
-/* ========================= */
-
-app.post("/incidencia",(req,res)=>{
-
-    const nueva = {
-        id: incidencias.length + 1,
-        ticket: req.body.ticket,
-        serie: req.body.serie,
-        alumno: req.body.alumno,
-        curso: req.body.curso,
-        problema: req.body.problema,
-        sustitucion: req.body.sustitucion,
-        razon: req.body.razon || "",
-        fecha: new Date().toLocaleString()
-    };
-
-    incidencias.push(nueva);
-
-    /* COLA DE ESPERA */
-
-    if(
-        nueva.sustitucion === "No" &&
-        nueva.razon.toLowerCase().includes("no habia")
-    ){
-
-        colaEspera.push({
-            alumno:nueva.alumno,
-            curso:nueva.curso,
-            ticket:nueva.ticket
+    for(let i=1;i<=10;i++){
+        dispositivos.push({
+            nombre: `Botiquín ${i}`,
+            estado: "Disponible"
         });
-
     }
 
-    res.json({
-        ok:true,
-        mensaje:"Incidencia registrada"
-    });
-
-});
-
-/* ========================= */
-/*         PRESTAMOS         */
-/* ========================= */
-
-app.post("/prestamo",(req,res)=>{
-
-    const movimiento = {
-        id: prestamos.length + 1,
-        ticket:req.body.ticket,
-        alumno:req.body.alumno,
-        curso:req.body.curso,
-        dispositivo:req.body.dispositivo,
-        tipo:req.body.tipo,
-        fecha:req.body.fecha
-    };
-
-    prestamos.push(movimiento);
-
-    /* CAMBIO DE ESTADO */
-
-    const disp = dispositivos.find(
-        d => d.nombre === req.body.dispositivo
-    );
-
-    if(disp){
-
-        if(req.body.tipo === "Entrega"){
-            disp.estado = "Prestado";
-        }
-
-        if(req.body.tipo === "Devolución"){
-            disp.estado = "Disponible";
-        }
-
+    for(let i=1;i<=11;i++){
+        dispositivos.push({
+            nombre: `Semic ${i}`,
+            estado: "Disponible"
+        });
     }
-
-    res.json({
-        ok:true,
-        mensaje:"Movimiento registrado"
-    });
-
-});
-
-/* ========================= */
-/*          BUSCAR           */
-/* ========================= */
-
-app.get("/buscar",(req,res)=>{
-
-    const q = (req.query.q || "").toLowerCase();
-
-    const incidenciasEncontradas = incidencias.filter(i =>
-        i.ticket.toLowerCase().includes(q) ||
-        i.serie.toLowerCase().includes(q) ||
-        i.alumno.toLowerCase().includes(q)
-    );
-
-    const prestamosEncontrados = prestamos.filter(p =>
-        p.ticket.toLowerCase().includes(q) ||
-        p.alumno.toLowerCase().includes(q) ||
-        p.dispositivo.toLowerCase().includes(q)
-    );
-
-    res.json({
-        incidencias: incidenciasEncontradas,
-        prestamos: prestamosEncontrados,
-        cola: colaEspera
-    });
-
-});
-
-/* ========================= */
-/*      DISPOSITIVOS         */
-/* ========================= */
-
-app.get("/dispositivos",(req,res)=>{
 
     res.json(dispositivos);
-
 });
 
-/* ========================= */
-/*      ULTIMAS INCIDENCIAS  */
-/* ========================= */
+/* GUARDAR INCIDENCIA */
 
-app.get("/ultimas-incidencias",(req,res)=>{
+app.post("/incidencias", (req,res)=>{
 
-    const ultimas = incidencias.slice(-5).reverse();
+    const { alumno, dispositivo, descripcion } = req.body;
 
-    res.json(ultimas);
+    const fecha = new Date().toLocaleDateString();
 
-});
+    db.run(
+        `INSERT INTO incidencias
+        (alumno, dispositivo, descripcion, estado, fecha)
+        VALUES (?,?,?,?,?)`,
+        [alumno, dispositivo, descripcion, "Abierta", fecha],
+        function(err){
 
-/* ========================= */
-/*         HOME              */
-/* ========================= */
+            if(err){
+                res.status(500).json({error: err.message});
+            }else{
+                res.json({
+                    ok:true,
+                    id:this.lastID
+                });
+            }
 
-app.get("/",(req,res)=>{
-
-    res.sendFile(
-        path.join(__dirname,"public","chromebooks.html")
+        }
     );
 
 });
 
-/* ========================= */
-/*        INICIAR            */
-/* ========================= */
+/* LISTAR INCIDENCIAS */
 
-app.listen(PORT,()=>{
+app.get("/incidencias", (req,res)=>{
 
-    console.log(`Servidor funcionando en puerto ${PORT}`);
+    db.all(
+        `SELECT * FROM incidencias ORDER BY id DESC`,
+        [],
+        (err,rows)=>{
 
+            if(err){
+                res.status(500).json({error: err.message});
+            }else{
+                res.json(rows);
+            }
+
+        }
+    );
+
+});
+
+/* NUEVO PRESTAMO */
+
+app.post("/prestamos",(req,res)=>{
+
+    const { alumno, dispositivo } = req.body;
+
+    const fecha = new Date().toLocaleDateString();
+
+    db.run(
+        `INSERT INTO prestamos
+        (alumno, dispositivo, fecha)
+        VALUES (?,?,?)`,
+        [alumno, dispositivo, fecha],
+        function(err){
+
+            if(err){
+                res.status(500).json({error: err.message});
+            }else{
+                res.json({
+                    ok:true,
+                    id:this.lastID
+                });
+            }
+
+        }
+    );
+
+});
+
+/* LISTAR PRESTAMOS */
+
+app.get("/prestamos",(req,res)=>{
+
+    db.all(
+        `SELECT * FROM prestamos ORDER BY id DESC`,
+        [],
+        (err,rows)=>{
+
+            if(err){
+                res.status(500).json({error: err.message});
+            }else{
+                res.json(rows);
+            }
+
+        }
+    );
+
+});
+
+app.listen(PORT, ()=>{
+    console.log("Servidor funcionando correctamente");
 });

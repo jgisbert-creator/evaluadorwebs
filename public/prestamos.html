@@ -1,66 +1,81 @@
-```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
-
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Préstamos</title>
 
-<link rel="stylesheet" href="style.css">
+<style>
+
+body{
+    font-family:Arial;
+    background:#f5f6fa;
+    padding:20px;
+}
+
+form{
+    background:white;
+    padding:20px;
+    border-radius:15px;
+}
+
+input{
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+}
+
+button{
+    margin-top:20px;
+    width:100%;
+    padding:15px;
+    background:#0057ff;
+    color:white;
+    border:none;
+}
+
+</style>
 
 </head>
 
 <body>
 
-<header>
-<div>Préstamos</div>
-</header>
+<h1>Nuevo préstamo</h1>
 
-<div class="container">
+<form id="formulario">
 
-<div class="card">
+<input type="text" id="alumno" placeholder="Alumno">
 
-<h2>Registrar movimiento</h2>
+<input type="text" id="dispositivo" placeholder="Dispositivo">
 
-<input id="ticket" placeholder="Ticket origen">
+<button>Guardar préstamo</button>
 
-<input id="alumno" placeholder="Alumno">
+</form>
 
-<input id="curso" placeholder="Curso">
+<script>
 
-<select id="dispositivo">
+document.getElementById("formulario")
+.addEventListener("submit", async(e)=>{
 
-<option>Botiquín 1</option>
-<option>Botiquín 2</option>
-<option>Botiquín 3</option>
-<option>Semic 1</option>
-<option>Semic 2</option>
+e.preventDefault();
 
-</select>
+const datos = {
+    alumno:document.getElementById("alumno").value,
+    dispositivo:document.getElementById("dispositivo").value
+};
 
-<select id="movimiento">
+await fetch("/prestamos",{
+    method:"POST",
+    headers:{
+        "Content-Type":"application/json"
+    },
+    body:JSON.stringify(datos)
+});
 
-<option>Entrega</option>
-<option>Devolución</option>
+alert("Préstamo guardado");
 
-</select>
+});
 
-<input id="fecha" type="date">
-
-<button onclick="guardarPrestamo()">
-
-Guardar movimiento
-
-</button>
-
-</div>
-
-</div>
-
-<script src="app.js"></script>
+</script>
 
 </body>
 </html>
-```

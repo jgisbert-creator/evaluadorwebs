@@ -1,44 +1,93 @@
-```html
-<!DOCTYPE html>
+k<!DOCTYPE html>
 <html lang="es">
 <head>
-
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Buscador</title>
 
-<link rel="stylesheet" href="style.css">
+<style>
+
+body{
+    font-family:Arial;
+    background:#f5f6fa;
+    padding:20px;
+}
+
+input{
+    width:100%;
+    padding:15px;
+    margin-bottom:20px;
+}
+
+.item{
+    background:white;
+    padding:15px;
+    margin-bottom:10px;
+    border-radius:10px;
+}
+
+</style>
 
 </head>
 
 <body>
 
-<header>
-<div>Buscador</div>
-</header>
+<h1>Historial incidencias</h1>
 
-<div class="container">
+<input type="text" id="busqueda" placeholder="Buscar">
 
-<div class="card">
+<div id="resultado"></div>
 
-<h2>Buscar historial</h2>
+<script>
 
-<input id="buscar"
-placeholder="Alumno, ticket o serie">
+let incidencias=[];
 
-<button onclick="buscar()">
-Buscar
-</button>
+fetch("/incidencias")
+.then(r=>r.json())
+.then(data=>{
 
-</div>
+    incidencias=data;
+    mostrar(data);
 
-<div id="resultados" class="lista"></div>
+});
 
-</div>
+function mostrar(lista){
 
-<script src="app.js"></script>
+    let html="";
+
+    lista.forEach(i=>{
+
+        html += `
+        <div class="item">
+            <b>${i.alumno}</b><br>
+            ${i.dispositivo}<br>
+            ${i.descripcion}
+        </div>
+        `;
+
+    });
+
+    document.getElementById("resultado").innerHTML=html;
+
+}
+
+document.getElementById("busqueda")
+.addEventListener("input",(e)=>{
+
+    const texto = e.target.value.toLowerCase();
+
+    const filtrado = incidencias.filter(i=>
+
+        i.alumno.toLowerCase().includes(texto) ||
+        i.dispositivo.toLowerCase().includes(texto) ||
+        i.descripcion.toLowerCase().includes(texto)
+
+    );
+
+    mostrar(filtrado);
+
+});
+
+</script>
 
 </body>
 </html>
-```

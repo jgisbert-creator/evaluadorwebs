@@ -1,62 +1,86 @@
-```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
-
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Incidencias</title>
 
-<link rel="stylesheet" href="style.css">
+<style>
 
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+body{
+    font-family:Arial;
+    background:#f5f6fa;
+    padding:20px;
+}
+
+form{
+    background:white;
+    padding:20px;
+    border-radius:15px;
+}
+
+input,textarea{
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+}
+
+button{
+    margin-top:20px;
+    width:100%;
+    padding:15px;
+    background:#0057ff;
+    color:white;
+    border:none;
+}
+
+</style>
 
 </head>
 
 <body>
 
-<header>
-<div>Incidencias</div>
-</header>
+<h1>Nueva incidencia</h1>
 
-<div class="container">
+<form id="formulario">
 
-<div class="card">
+<input type="text" id="alumno" placeholder="Alumno" required>
 
-<h2>Nueva incidencia</h2>
+<input type="text" id="dispositivo" placeholder="Dispositivo" required>
 
-<input id="ticket" placeholder="Ticket">
-<input id="serie" placeholder="Número de serie">
-<input id="alumno" placeholder="Alumno">
-<input id="curso" placeholder="Curso">
+<textarea id="descripcion" placeholder="Descripción"></textarea>
 
-<textarea id="problema"
-placeholder="Problema"></textarea>
+<button>Guardar incidencia</button>
 
-<select id="sustitucion">
+</form>
 
-<option>Si</option>
-<option>No</option>
+<script>
 
-</select>
+document.getElementById("formulario")
+.addEventListener("submit", async(e)=>{
 
-<input id="motivo"
-placeholder="Motivo si no hay sustitución">
+e.preventDefault();
 
-<button onclick="guardarIncidencia()">
+const datos = {
+    alumno:document.getElementById("alumno").value,
+    dispositivo:document.getElementById("dispositivo").value,
+    descripcion:document.getElementById("descripcion").value
+};
 
-Guardar incidencia
+const res = await fetch("/incidencias",{
+    method:"POST",
+    headers:{
+        "Content-Type":"application/json"
+    },
+    body:JSON.stringify(datos)
+});
 
-</button>
+const data = await res.json();
 
-</div>
+alert("Incidencia guardada");
 
-</div>
+});
 
-<script src="app.js"></script>
+</script>
 
 </body>
 </html>
-```
